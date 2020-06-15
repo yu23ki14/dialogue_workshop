@@ -7,7 +7,7 @@
             p.title.is-6.is-spaced
               | {{ seed.content }}
             p.subtitle.is-6
-              |名前: {{ seed.name }}、　ID: {{ seed.segment}}、　REF: {{ seed.reference}}
+              |名前: {{ seed.name }}、　ID: {{ seed.id}}、　REF: {{ seed.ref}}
       .container.column.project-clusters-container
         .project-content-controller
           .project-indentation
@@ -17,10 +17,10 @@
           .media-content.project-cluster.add-cluster
             .add-cluster-item(@click="newCluster(1)")
               p
-                |新しく島を1つ追加する＋
+                |クラスターを1つ追加する＋
             .add-cluster-item(@click="newCluster(3)")
               p
-                |新しく島を3つ追加する＋
+                |クラスターを3つ追加する＋
         .project-clusters
           .media-content.project-cluster(v-for='(cluster, c_index) in clusters')
             p.project-cluster-no
@@ -36,13 +36,15 @@
                   p.title.is-6.is-spaced
                     | {{ c_seed.content }}
                   p.subtitle.is-6
-                    |名前: {{ c_seed.name }}、　ID: {{ c_seed.segment}}、　REF: {{ c_seed.reference}}
+                    |名前: {{ c_seed.name }}、　ID: {{ c_seed.id}}、　REF: {{ c_seed.ref}}
 
-      .project-data-controller
-        p(@click="saveData")
-          |保存する
-        p(@click="downloadCSV")
-          |CSVをダウンロード
+    .project-data-controller(v-if="this.host")
+      p(@click="saveData")
+        |保存する
+      p(@click="downloadCSV")
+        |CSVをダウンロード
+
+    button.project-host-button(v-shortkey="['ctrl', 'alt', 'h']" @shortkey="beHost()")
 
     b-loading(:is-full-page='false' :active.sync='isLoading' :can-cancel='false')
     
@@ -53,16 +55,25 @@ import io from 'socket.io-client'
 import axios from 'axios'
 
 export default {
+  head: {
+    htmlAttrs: {
+      style: 'overflow: hidden'
+    },
+    bodyAttrs: {
+      style: 'overflow: hidden'
+    }
+  },
   data() {
     return {
       message: '',
       messages: [],
-      socket: '',
+      socket: null,
       isLoading: true,
       seeds: [],
       clusters: [],
       selected_seed: null,
-      indentation: 26
+      indentation: 26,
+      host: false
     }
   },
   computed: {
@@ -78,6 +89,7 @@ export default {
     this.clusters = projectCluster
     // VueインスタンスがDOMにマウントされたらSocketインスタンスを生成する
     this.socket = io()
+    this.sendMessage('enternewuser', 'hello')
 
     // サーバー側で保持しているメッセージを受信する
     this.socket.on('new-message', message => {
@@ -103,6 +115,26 @@ export default {
         case 'updateLabel':
           this.clusters[message.data.index].label = message.data.label
           break
+        case 'dataparallelization':
+          this.seeds = message.data.seeds
+          this.clusters = message.data.clusters
+          break
+        case 'enternewuser':
+          if (this.host) {
+            this.sendMessage('dataparallelization', {seeds: this.seeds, clusters: this.clusters})
+          }
+          break
+        case 'requestload':
+          this.isLoading = true
+          break
+        case 'requeststopload':
+          this.isLoading = false
+          break
+        case 'changehost':
+          if (this.host) {
+            this.host = false
+          }
+          break
       }
     })
 
@@ -112,11 +144,12 @@ export default {
     }, 1000)
 
     window.addEventListener('beforeunload', (event) => {
-      // Cancel the event as stated by the standard.
       event.preventDefault();
-      // Chrome requires returnValue to be set.
       event.returnValue = '';
     });
+  },
+  beforeDestroy() {
+    this.socket.disconnect()
   },
   methods: {
     newCluster (i) {
@@ -156,12 +189,28 @@ export default {
       this.socket.emit('send-message', message)
     },
     saveData () {
-      this.$axios.$get('/test').then(res => {
-        console.log(res)
+      this.isLoading = true
+      this.sendMessage('requestload', 'please load')
+      this.$axios.$post('/api/save_data', {
+        seeds: this.seeds,
+        clusters: this.clusters,
+        name: this.$route.params.id
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }).then(res => {
+        this.isLoading = false
+        this.sendMessage('requeststopload', 'please stop load')
       })
     },
     downloadCSV () {
 
+    },
+    beHost() {
+      this.host = !this.host
+      this.sendMessage('changehost', 'pleasechangehost')
     }
   }
 }
@@ -209,16 +258,17 @@ export default {
   margin-left: 50px
 .project-indentation
   margin-bottom: 5px
+  font-size: .8rem
   input
-    font-size: 16px
+    font-size: .8rem
     width: 40px
     border: none
 .project-clusters
-  height: calc( 100vh - 181px )
+  height: calc( 100vh - 160px )
   overflow: auto
 .project-cluster
   padding: 40px 20px 20px
-  border: 3px gray solid
+  border: 2px gray solid
   margin-bottom: 25px
   position: relative
   &.add-cluster
@@ -232,10 +282,12 @@ export default {
       width: 49%
       text-align: center
       background: lightgray
-      padding: 10px
-      border: 2px solid
+      padding: 5px
+      border: 2px solid gray
       &:first-of-type
         background: white
+      p
+        font-size: .8rem
   textarea
     width: 100%
     border: none
@@ -263,4 +315,6 @@ export default {
     cursor: pointer
     &:hover
       text-decoration: underline
+.project-host-button
+  display: none
 </style>

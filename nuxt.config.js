@@ -15,6 +15,7 @@ module.exports = {
       { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
     ]
   },
+  serverMiddleware: ['~~/api/save_data', '~~/api/upload_csv'],
   /*
   ** Customize the progress-bar color
   */
@@ -24,10 +25,12 @@ module.exports = {
   */
   css: [
   ],
+  srcDir: './client/',
   /*
   ** Plugins to load before mounting the App
   */
   plugins: [
+    { src: '~/plugins/vue-shortkey.js', ssr: false }
   ],
   /*
   ** Nuxt.js dev-modules
