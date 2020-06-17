@@ -189,7 +189,7 @@ export default {
       this.socket.emit('send-message', message)
     },
     saveData () {
-      this.isLoading = true
+      //this.isLoading = true
       this.sendMessage('requestload', 'please load')
       this.$axios.$post('/api/save_data', {
         seeds: this.seeds,
@@ -201,7 +201,7 @@ export default {
           'Content-Type': 'application/json'
         }
       }).then(res => {
-        this.isLoading = false
+        //this.isLoading = false
         this.sendMessage('requeststopload', 'please stop load')
       })
     },
