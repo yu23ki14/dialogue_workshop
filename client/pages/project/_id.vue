@@ -190,7 +190,7 @@ export default {
     },
     saveData () {
       //this.isLoading = true
-      this.sendMessage('requestload', 'please load')
+      //this.sendMessage('requestload', 'please load')
       this.$axios.$post('/api/save_data', {
         seeds: this.seeds,
         clusters: this.clusters,
@@ -202,7 +202,7 @@ export default {
         }
       }).then(res => {
         //this.isLoading = false
-        this.sendMessage('requeststopload', 'please stop load')
+        //this.sendMessage('requeststopload', 'please stop load')
       })
     },
     downloadCSV () {
