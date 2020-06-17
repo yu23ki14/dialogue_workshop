@@ -44,7 +44,7 @@
       p(@click="downloadCSV")
         |CSVをダウンロード
 
-    button.project-host-button(v-shortkey="['ctrl', 'alt', 'h']" @shortkey="beHost()")
+    button.project-host-button(v-shortkey="['shift', 'alt', 'h']" @shortkey="beHost()")
 
     b-loading(:is-full-page='false' :active.sync='isLoading' :can-cancel='false')
     
