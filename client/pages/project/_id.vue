@@ -94,9 +94,6 @@ export default {
     // サーバー側で保持しているメッセージを受信する
     this.socket.on('new-message', message => {
       switch (message.type) {
-        case 'selectseed':
-          this.selected_seed = message.data.id
-          break;
         case 'addseed':
           this.clusters[message.data.cluster].seeds.push(message.data.seed)
           this.seeds[message.data.seed].selected = true
@@ -179,7 +176,6 @@ export default {
     },
     selectSeed (i) {
       this.selected_seed = i
-      this.sendMessage('selectseed', {id: i})
     },
     sendMessage (t, d) {
       let message = {
