@@ -1,15 +1,19 @@
 <template lang="pug">
   .project-wrapper.container
     section.main-content.columns
-      .container.column.project-seeds-container
+      .container.column.project-seeds-container(:style="'width: calc( 100% - ' + clusters_width + '% - 50px)'")
         .media-content.project-seed(:class="selected_seed === index ? 'is-selected' : ''" v-for='(seed, index) in seeds' v-if="!seed.selected")
           .content(@click="selectSeed(index)")
             p.title.is-6.is-spaced
               | {{ seed.content }}
             p.subtitle.is-6
               |名前: {{ seed.name }}、　ID: {{ seed.id}}、　REF: {{ seed.ref}}
-      .container.column.project-clusters-container
+      .container.column.project-clusters-container(:style="'width: ' + clusters_width + '%'")
         .project-content-controller
+          .project-indentation
+            span クラスターエリアの幅：
+            input(type="number" v-model="clusters_width")
+            span %
           .project-indentation
             span ラベルの改行文字数：
             input(type="number" v-model="indentation")
@@ -71,6 +75,7 @@ export default {
       isLoading: true,
       selected_seed: null,
       indentation: 26,
+      clusters_width: 50,
       host: false
     }
   },
