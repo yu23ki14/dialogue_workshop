@@ -41,7 +41,7 @@
     .project-data-controller(v-if="this.host")
       p(@click="saveData")
         |保存する
-      p(@click="downloadCSV")
+      //p(@click="downloadCSV")
         |CSVをダウンロード
 
     button.project-host-button(v-shortkey="['shift', 'alt', 'h']" @shortkey="beHost()")
@@ -69,11 +69,25 @@ export default {
       messages: [],
       socket: null,
       isLoading: true,
-      seeds: [],
-      clusters: [],
       selected_seed: null,
       indentation: 26,
       host: false
+    }
+  },
+  async asyncData (context) {
+    const seed = await context.$axios.$get(process.env.S3_BUKET_URL + '/' + context.params.id + '/seed.json').then(
+        res => {
+          return res
+        }
+      )
+    const cluster = await context.$axios.$get(process.env.S3_BUKET_URL + '/' + context.params.id + '/cluster.json').then(
+        res => {
+          return res
+        }
+      )
+    return {
+      seeds: seed,
+      clusters: cluster
     }
   },
   computed: {
@@ -83,10 +97,7 @@ export default {
     },
   },
   mounted() {
-    const projectSeed = require('~/project_json/seed_' + this.$route.params.id + '.json')
-    const projectCluster = require('~/project_json/cluster_' + this.$route.params.id + '.json')
-    this.seeds = projectSeed
-    this.clusters = projectCluster
+    
     // VueインスタンスがDOMにマウントされたらSocketインスタンスを生成する
     this.socket = io()
     this.sendMessage('enternewuser', 'hello')
@@ -185,21 +196,26 @@ export default {
       this.socket.emit('send-message', message)
     },
     saveData () {
-      //this.isLoading = true
-      //this.sendMessage('requestload', 'please load')
-      this.$axios.$post('/api/save_data', {
-        seeds: this.seeds,
-        clusters: this.clusters,
-        name: this.$route.params.id
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json'
+      this.isLoading = true
+      this.sendMessage('requestload', 'please load')
+      this.$axios.$get('/api/save_data/presined?file_name=seed.json&project_name=' + this.$route.params.id).then(
+        res => {
+          this.$axios.$put(res,
+            this.seeds
+          ).then(res => {
+            this.$axios.$get('/api/save_data/presined?file_name=cluster.json&project_name=' + this.$route.params.id).then(
+              res => {
+                this.$axios.$put(res,
+                  this.clusters
+                ).then(res => {
+                  this.isLoading = false
+                  this.sendMessage('requeststopload', 'please stop load')
+                })
+              }
+            )
+          })
         }
-      }).then(res => {
-        //this.isLoading = false
-        //this.sendMessage('requeststopload', 'please stop load')
-      })
+      )
     },
     downloadCSV () {
 

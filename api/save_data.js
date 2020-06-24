@@ -1,32 +1,30 @@
 const express = require("express");
 const app = express();
-const bodyParser = require('body-parser')
-const fs = require('fs')
+//const bodyParser = require('body-parser')
+const AWS = require('aws-sdk')
 
-app.use(bodyParser.urlencoded({
-  extended: true
-}));
-app.use(bodyParser.json())
+AWS.config.update({
+  "accessKeyId": process.env.ACESSKEYID,
+  "secretAccessKey": process.env.SECRETACCESSKEY,
+  "region": "ap-northeast-1"
+})
 
-app.post("/", function(req, res) {
-  const cpath = __dirname.slice(0, -3) + 'client/project_json/cluster_' + req.body.name + '.json'
-  const spath = __dirname.slice(0, -3) + 'client/project_json/seed_' + req.body.name + '.json'
-  const clusters = JSON.stringify(req.body.clusters)
-  const seeds = JSON.stringify(req.body.seeds)
+//app.use(bodyParser.urlencoded({
+//  extended: true
+//}));
+//app.use(bodyParser.json())
 
-  fs.writeFile(cpath, clusters, function (err) {
-    if (err) {
-      res.send(err)
-    }
+app.get("/presined", async (req, res) => {
+  const s3 = new AWS.S3({
+    signatureVersion: 'v4'
   })
-
-  fs.writeFile(spath, seeds, function (err) {
-    if (err) {
-      res.send(err)
-    }
-  })
-
-  res.send("Hello");
+  const params = {
+    Bucket: 'clustra',
+    Key: req.query.project_name +'/' + req.query.file_name,
+    Expires: 60
+  }
+  const uploadUrl = await s3.getSignedUrl('putObject', params);
+  res.send(uploadUrl)
 });
 
 module.exports = {

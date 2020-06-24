@@ -27,6 +27,9 @@ module.exports = {
   css: [
   ],
   srcDir: './client/',
+  env: {
+    S3_BUKET_URL: process.env.S3_BUKET_URL
+  },
   /*
   ** Plugins to load before mounting the App
   */

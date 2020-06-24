@@ -7,14 +7,14 @@
       input.input(v-model='name' type='text' placeholder='半角英数字でプロジェクト名を入力してください。')
       .file.has-name.is-boxed.project-new-file
         label.file-label
-          input.file-input(type='file' name='csv' accept='.csv' @change='uploadfilechange')
+          input.file-input(type='file' name='json' accept='.json' @change='uploadfilechange')
           span.file-cta
             span.file-icon
               img(src='~/assets/download-arrow.svg' alt='')
             p
-              |アップロードするCSVファイルを選択してください
+              |アップロードするJSONファイルを選択してください
           span.file-name
-            | {{uploadfiletxt}}
+            | {{uploadfilename}}
       label.shuffle
         span
           |シャッフルする
@@ -29,33 +29,37 @@
 export default {
   data() {
     return {
-      uploadfiletxt: '',
+      uploadfilename: '',
       file: null,
       name: '',
       shuffle: false
     }
   },
   methods: {
-   uploadfilechange (e) {
-      this.uploadfiletxt = e.target.files[0].name
+    uploadfilechange (e) {
+      this.uploadfilename = e.target.files[0].name
       this.file = e.target.files[0]
     },
     upload () {
-      if (this.file != null) {
-        let formData = new FormData
-        formData.append('name', this.name)
-        formData.append('file', this.file)
-        formData.append('shuffle', this.shuffle)
-        this.$axios.$post('/api/upload_csv',
-          formData,
-          {
-            headers: {
-              'Content-type': 'multipart/form-data'
-            }
+      const ClusterTemplate = require('~/project_json/cluster_template.json')
+      if (this.file != null && this.name != '') {
+        this.$axios.$get('/api/save_data/presined?file_name=seed.json&project_name=' + this.name).then(
+          res => {
+            this.$axios.$put(res,
+              this.file
+            ).then(res => {
+              this.$axios.$get('/api/save_data/presined?file_name=cluster.json&project_name=' + this.name).then(
+                res => {
+                  this.$axios.$put(res,
+                    ClusterTemplate
+                  ).then(res => {
+                    this.$router.push('/project/' + this.name)
+                  })
+                }
+              )
+            })
           }
-        ).then(res => {
-          this.$router.push('/project/' + this.name)
-        })
+        )
       }
     }
   }
